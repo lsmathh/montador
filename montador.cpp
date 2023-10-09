@@ -254,10 +254,10 @@ int main(int argc, char **argv){
                     cout << "Semantic error: label with reserved name at line " << line_counter << "\n";
                 }
                 if(def_symbols.count(label)){
-                    cout << "Semantic  error: label redefined at line" << line_counter << "\n";
+                    cout << "Semantic  error: label redefined at line " << line_counter << "\n";
                 }else{
                     //verifica se esta escrito corretamente
-                    if(!verifyToken(label)) cout << "Lexical error: token is not valid at" << line_counter << "\n"; 
+                    if(!verifyToken(label)) cout << "Lexical error: Token is not valid at " << line_counter << "\n"; 
                     else{
                         def_symbols.insert(label);
                         symb_table[label] = PC; 
@@ -283,7 +283,7 @@ int main(int argc, char **argv){
 
 
     ifstream new_input_file("pre_processed_file_section.txt");
-    ofstream out_file("montador.obj");
+    ofstream out_file("myprogram.obj");
     PC = 0, line_counter = 1;
 
     //segunda passagem
@@ -383,6 +383,7 @@ int main(int argc, char **argv){
                 }
         
             }else{
+                //Codigo esta dando erro lexico quando ADD recebe operando como "X+2" (NECESSARIO ARRUMAR)
                 if(!isNumeric(tokens[i])) cout << "Lexical error: token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
             }
         }
