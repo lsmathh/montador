@@ -177,10 +177,40 @@ int main(int argc, char **argv){
     output_file.close();
 
 
+    //verificar se secoes estao nos locais correto dentro do arquivo
+    ifstream input_section("pre_processed_file.txt");
+    ofstream output_section("pre_processed_file_section.txt");
+    string code_data, code_text, code_section = "";
+    int flag = 0;
+
+    while(getline(input_section, line)){
+        
+        //cout << flag << " " << line << endl;
+        if(line == "SECAO DATA ") flag = 1;
+        if(line == "SECAO TEXT ") flag = 0;
+
+        if(flag == 0){
+            code_text += line + "\n";
+        }
+        if(flag == 1){
+            code_data += line + "\n";
+        }
+    }
+
+    code_section += code_text;
+    code_section += code_data;
+
+    //cout << code_section << endl;
+
+    output_section << code_section << endl;
+
+    output_section.close();
+    input_section.close();
+
 
     //Dar inicio a primeira passagem para gerar a tabela de simbolos
     
-    ifstream input_f("pre_processed_file.txt");
+    ifstream input_f("pre_processed_file_section.txt");
     int PC = 0, line_counter = 1;
 
     while(getline(input_f, line)){
@@ -252,7 +282,7 @@ int main(int argc, char **argv){
     }
 
 
-    ifstream new_input_file("pre_processed_file.txt");
+    ifstream new_input_file("pre_processed_file_section.txt");
     ofstream out_file("montador.obj");
     PC = 0, line_counter = 1;
 
