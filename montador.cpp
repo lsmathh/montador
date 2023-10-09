@@ -1,14 +1,15 @@
 #include <iostream>
 #include <vector>
-#include <string>
 #include <fstream>
 #include <sstream>
 #include <map>
 #include <set>
 #include <regex>
 #include <algorithm>
+#include <string>
 
-using namespace std; 
+
+using namespace std;
 
 vector<string> getToken(string); 
 bool verifyToken(string);
@@ -26,6 +27,26 @@ vector<string> getToken(string l){
     }
 
     return tokens;
+}
+
+
+bool isNumeric(std::string const &str)
+{
+    
+    auto it = str.begin();
+    auto x = str.begin();
+    if(*x == '-'){
+        it++;
+        while (it != str.end() && (std::isdigit(*it))) {
+        it++;
+        }
+    } else {
+        while (it != str.end() && (std::isdigit(*it))) {
+        it++; 
+        }
+    }
+    
+    return !str.empty() && it == str.end();
 }
 
 
@@ -54,7 +75,8 @@ bool verifyToken(string v){
 
 //MAIN
 int main(int argc, char **argv){
-
+    int fname_index;
+    fname_index = 1;
     set<string> reserved_words = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
                                     "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP", "CONST", "SPACE"};
 
@@ -106,11 +128,9 @@ int main(int argc, char **argv){
 
     /* Precisamos pre processar o arquivo para remover espaços duplicados, tornar não case-sensitive e outros problemas*/
     string line;
-    ifstream input_file;
-    ofstream output_file;
-
-    input_file.open("myprogram.asm");
-    output_file.open("pre_processed_file.txt");
+    string fname = argv[1];
+    ifstream input_file(fname);
+    ofstream output_file("pre_processed_file.txt");
 
     //Verificando se ocorreu tudo certo com os arquivos
     //Input
@@ -120,7 +140,7 @@ int main(int argc, char **argv){
     }
     //Output
     if(!output_file.is_open()){
-        cout << " Output file not found. \n";
+        std::cout << " Output file not found. \n";
         return 0;
     }
 
@@ -188,6 +208,7 @@ int main(int argc, char **argv){
                 cout << token << " label has missing ':'" << "\n";
             }
 
+            
             //se for label
             if(token.back() == ':'){
 
@@ -206,7 +227,7 @@ int main(int argc, char **argv){
                     cout << "Semantic  error: label redefined at line" << line_counter << "\n";
                 }else{
                     //verifica se esta escrito corretamente
-                    if(!verifyToken(label)) cout << "Lexical error: token is not valid at line " << line_counter << "\n"; 
+                    if(!verifyToken(label)) cout << "Lexical error: token is not valid at" << line_counter << "\n"; 
                     else{
                         def_symbols.insert(label);
                         symb_table[label] = PC; 
@@ -232,7 +253,7 @@ int main(int argc, char **argv){
 
 
     ifstream new_input_file("pre_processed_file.txt");
-    ofstream out_file("montadores.obj");
+    ofstream out_file("montador.obj");
     PC = 0, line_counter = 1;
 
     //segunda passagem
@@ -249,12 +270,28 @@ int main(int argc, char **argv){
             continue;
         }
 
-        //removendo labels
+        //Removendo labels
         int label_pos = line.find_first_of(":");
         if (label_pos != string::npos) line = line.substr(label_pos + 2);
 
+        //Removendo virgula
         int virgula_pos = line.find_first_of(",");
         if (virgula_pos != string::npos) line = line.replace(virgula_pos, 1, " ");
+
+        //Removendo comentários
+        int pos = 0;
+        if(line.find(";"))  pos = line.find(";");
+        if(pos != string::npos) line = line.substr(0, pos);
+
+        //Removendo TAB
+        replace(line.begin(), line.end(), '\t', ' ');
+
+        //Removendo espaçoes duplicados
+        line = regex_replace(line, regex("^ +| +$|( ) +"), "$1");
+
+        //Transformando o código em uppercase
+        transform(line.begin(), line.end(), line.begin(), ::toupper);
+        
 
 
         //cout << line << "\n";
@@ -262,47 +299,66 @@ int main(int argc, char **argv){
 
         //extraindo token
         vector<string> tokens = getToken(line);
-        //cout << line << endl;
+        //cout << line << " " << tokens.size() << endl;
         
 
         for(int i = 0; i < tokens.size(); i++){
-            if(i == 0){
-                if(def_opcodes.count(tokens[i])){
-                    PC += inst_size[tokens[i]];
-                    if(tokens.size() == 3){
-                        cod_objeto.push_back(opcodes_values[tokens[i]]);
-                        cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
-                        cod_objeto.push_back(to_string(symb_table[tokens[i+2]]));
-                    }else if(tokens.size() == 2 && i == 0){
-                        cod_objeto.push_back(opcodes_values[tokens[i]]);
-                        cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
-                    }else if(tokens.size() == 1){
-                        cod_objeto.push_back(opcodes_values[tokens[i]]);
-                    }
-                }else if(def_directives.count(tokens[i])){
-                    if(tokens[i] == "SPACE"){
-                            PC++;
-                            cod_objeto.push_back("0");
-
-                        }
-                        if(tokens[i] == "CONST"){
-                            if(i+1 < tokens.size()){
-                                cod_objeto.push_back(tokens[i+1]);
-                                PC++;
-                            }else{
-                                cout << "Syntactic error: Missing a value of CONST at line " << line_counter << "\n"; 
-                            }
-                            
-                        } 
-                }
-            }else if((i == 1 || i == 2) && tokens[i-1] != "CONST"){
-                if(!def_symbols.count(tokens[i])) cout << "Semantic error: Symbol not defined at line " << line_counter << "\n";
-            }
-        
-        }
             
+            if(verifyToken(tokens[i])){
+
+                //verifica se é operador
+                if(i == 0){
+                    //verifica se eh uma instrucao
+                    if(def_opcodes.count(tokens[i])){
+                        //verifica numeros de operandos das instrucoes
+                        if(inst_size[tokens[i]] == (int)tokens.size()){
+                            PC += inst_size[tokens[i]];
+                        if(tokens.size() == 3){ //if COPY, cria cod obj para COPY
+                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                            cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
+                            cod_objeto.push_back(to_string(symb_table[tokens[i+2]]));
+                        }else if(tokens.size() == 2 && i == 0){
+                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                            cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
+                        }else if(tokens.size() == 1){
+                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                        }
+                        }else{
+                            cout << "Syntactic error: missing operators at line " << line_counter << "\n"; 
+                        }
+                    //verifica se eh uma diretiva
+                    }else if(def_directives.count(tokens[i])){
+                        if(tokens[i] == "SPACE"){
+                                PC++;
+                                cod_objeto.push_back("0");
+
+                            }
+                            if(tokens[i] == "CONST"){
+                                if(i+1 < tokens.size()){
+                                    cod_objeto.push_back(tokens[i+1]);
+                                    PC++;
+                                }else{
+                                    cout << "Syntactic error: Missing a value of CONST at line " << line_counter << "\n"; 
+                                }
+                                
+                            }
+                    //nao eh diretiva e nem instrucao.. entao verifica se o valor do const, caso nao seja, palavra invalida
+                    }else{
+                        if(!isNumeric(tokens[i])){
+                            cout << "Lexical error: token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
+                        }
+                    }
+                }else if((i == 1 || i == 2) && tokens[i-1] != "CONST"){
+                    if(!def_symbols.count(tokens[i])) cout << "Semantic error: Symbol not defined at line " << line_counter << "\n";
+                }
+        
+            }else{
+                if(!isNumeric(tokens[i])) cout << "Lexical error: token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
+            }
+        }
         line_counter++;
     }
+            
 
     for(int i = 0; i < (int)cod_objeto.size(); i++) out_file << cod_objeto[i] << " ";
 
