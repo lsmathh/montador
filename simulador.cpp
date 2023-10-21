@@ -6,11 +6,15 @@
 
 using namespace std;
 
-int main(){
+int main(int argc, char **argv){
+    int fname_index;
+    fname_index = argc == 2 ? 1 : 2;
+    string fname = argv[fname_index];
+
     int ACC, PC, n, memory, comand , last;
     vector <int> program;
 
-    ifstream arquivo("myprogram.obj"); // ABRE O ARQUIVO
+    ifstream arquivo(fname); // ABRE O ARQUIVO
 
     while (arquivo >> n) { // COLOCA O ARQUIVO EM UM ARRAY
         program.push_back(n);   
@@ -21,9 +25,11 @@ int main(){
     ACC=0;
     PC=0;
 
+    if (fname_index == 2) return 0;
+
     while (comand!=14){
 
-        //cout << " PC <- " << PC << " ACC <- "<< ACC << std::endl;
+        cout << " PC <- " << PC << " ACC <- "<< ACC << std::endl;
         comand = program[PC];
         switch (comand)
         {
@@ -41,7 +47,7 @@ int main(){
                 PC+=2;
                 break;           
 
-            case 4://DIV
+            case 4://DIV./montador <file.asm>
                 ACC= ACC/(program[program[PC+1]]);
                 PC+=2;
                 break;  
