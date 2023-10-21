@@ -8,15 +8,16 @@
 #include <algorithm>
 #include <string>
 
-
 using namespace std;
 
-vector<string> getToken(string); 
-bool verifyToken(string);
+
+//Declarando funções
+string scanner(string file);
+bool isValidLabel(const string& label);
+vector<string> getToken(string l);
 
 
-
-//GERANDO TOKENS
+//Gerando tokens
 vector<string> getToken(string l){
     vector<string> tokens;
     string aux;
@@ -29,10 +30,9 @@ vector<string> getToken(string l){
     return tokens;
 }
 
-
+//Funcão que verifica se é número
 bool isNumeric(std::string const &str)
-{
-    
+{ 
     auto it = str.begin();
     auto x = str.begin();
     if(*x == '-'){
@@ -45,185 +45,153 @@ bool isNumeric(std::string const &str)
         it++; 
         }
     }
-    
     return !str.empty() && it == str.end();
 }
 
-
-//VERIFICANDO TOKENS
-bool verifyToken(string v){
-
-    //tamanho do token
-    if((int)v.size() > 30){
-        return false;
-    }
-
-    //verificando inicial
-    if(!((v[0] >= 'a' && v[0] <= 'z') || (v[0] >= 'A' && v[0] <= 'Z') || (v[0] == '_'))) {
-        return false;
+//FUNÇÃO PARA VALIDAR SIMBOLOS
+bool isValidLabel(const string& label){
+    if(!isNumeric(label)){
+        if(!(label.size() <= 30)) { 
+            cout << "O rótulo "  << label << " possui mais de 30 caracteres" << endl;
+            return false;
         }
 
-    //verificando token
-    int i = 1;  ;
-    while((int)v.size() > i){
-        if(!((v[i] >= 'a' && v[i] <= 'z') || (v[i] >= 'A' && v[i] <= 'Z') || (v[i] >= '0' && v[i] <= '9') || (v[i] == '_'))) return false;
-        i++;
+        if(!((label[0] >= 'a' && label[0] <= 'z') || (label[0] >= 'A' && label[0] <= 'Z') || (label[0] == '_'))) {
+            cout << "Invalid label " << label << "\n";
+            return false;
+        }
+
+        int i = 1; 
+        while((int)label.size() > i){
+            if(!((label[i] >= 'a' && label[i] <= 'z') || (label[i] >= 'A' && label[i] <= 'Z') || (label[i] >= '0' && label[i] <= '9') || (label[i] == '_'))) return false;
+            i++;
+        }
+
+        return true;
     }
     return true;
 }
 
-
-//MAIN
-int main(int argc, char **argv){
-    int fname_index;
-    fname_index = 1;
-    set<string> reserved_words = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
-                                    "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP", "CONST", "SPACE"};
-
-    vector<string> opcodes = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
-                                    "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP"};
-    //set de opcodes
-    set<string> def_opcodes;
-
-    //diretivas
-    vector<string> directives = {"CONST", "SPACE"};
-
-    //set de diretivas
-    set<string> def_directives;
-
-    //valores dos opcodes
-    map<string, string> opcodes_values;
-
-    //tamanhho de cada instrução
-    map<string, int> inst_size;
-
-    //codigo objeto
-    vector<string> cod_objeto;
-
-    //tabela de simbolos
-    map<string, int> symb_table;
-
-    //conjunto de simbolos definidos
-    set<string> def_symbols;
-
-    //Verificar se possui seção TEXT
-    bool text_section = false;
-
-    int c_section = 0; // 1 - TEXT // 2 - DATA
-
-
-    
-    //Inicializando os valores dos opcodes
-    for(int i = 0; i < (int)opcodes.size(); i++){
-        opcodes_values[opcodes[i]] = std::to_string(i + 1);
-        inst_size[opcodes[i]] = 2;
-        def_opcodes.insert(opcodes[i]);
-    }
-    inst_size["COPY"] = 3;
-    inst_size["STOP"] = 1;
-
-    //Inicializando diretivas
-    for(int i = 0; i < (int)directives.size(); i++) def_directives.insert(directives[i]);
-
-
-    /* Precisamos pre processar o arquivo para remover espaços duplicados, tornar não case-sensitive e outros problemas*/
-    string line;
-    string fname = argv[1];
-    ifstream input_file(fname);
-    ofstream output_file("pre_processed_file.txt");
-
-    //Verificando se ocorreu tudo certo com os arquivos
-    //Input
-    if(!input_file.is_open()){
-        cout << "Input file not found. \n";
-        return 0;
-    }
-    //Output
-    if(!output_file.is_open()){
-        std::cout << " Output file not found. \n";
-        return 0;
-    }
-
-
-    while(getline(input_file, line)){
-        
-    //Removendo comentários
-        int pos = 0;
-        if(line.find(";"))  pos = line.find(";");
-        if(pos != string::npos) line = line.substr(0, pos);
-
-    //Removendo TAB
-        replace(line.begin(), line.end(), '\t', ' ');
-
-    //Removendo espaçoes duplicados
-        line = regex_replace(line, regex("^ +| +$|( ) +"), "$1");
-
-    //Transformando o código em uppercase
-        transform(line.begin(), line.end(), line.begin(), ::toupper);
-
-    //Extrair o token da linha
-        vector<string> tokens = getToken(line);
-
-
-    //Gerar linha processada
-        string code = "";
-        for(int i = 0; i < (int)tokens.size(); i++) code += tokens[i] + " ";
-
-        output_file << code << endl;
-    }
-    
-
-    input_file.close();
-    output_file.close();
-
-
-    //verificar se secoes estao nos locais correto dentro do arquivo
-    ifstream input_section("pre_processed_file.txt");
-    ofstream output_section("pre_processed_file_section.txt");
+//FUNÇÃO PARA O PRÉ PROCESSAMENTO
+string pre_processing(string fname){
+    ifstream inputFile(fname);
+    ofstream outputFile("pre_processed.txt");
+    string output = "pre_processed.txt";
     string code_data, code_text, code_section = "";
     int flag = 0;
 
-    while(getline(input_section, line)){
-        
-        //cout << flag << " " << line << endl;
-        if(line == "SECAO DATA ") flag = 1;
-        if(line == "SECAO TEXT ") flag = 0;
-
-        if(flag == 0){
-            code_text += line + "\n";
-        }
-        if(flag == 1){
-            code_data += line + "\n";
-        }
+    if (!inputFile) {
+        cerr << "Error to create the input file." << endl;
     }
 
+    if (!outputFile) {
+        cerr << "Error to create the output file." << endl;
+    }
+
+    regex pattern("\\s+"); // Expressão regular para encontrar espaços em branco repetidos
+    string line;
+
+    while (getline(inputFile, line)) {
+
+        //Remove comentários
+        int pev = 0; 
+        if(line.find(";")) pev = line.find(";");
+        if(pev != string::npos) line = line.substr(0, pev);
+
+        // Remove tabulações, quebras de linha e espaços desnecessários
+        string processedLine = regex_replace(line, pattern, " ");
+
+        //Tornando o código não sensível ao caso
+        transform(processedLine.begin(), processedLine.end(), processedLine.begin(), ::toupper);
+
+        //Removendo espaço do final das linhas 
+        while (!processedLine.empty() && std::isspace(processedLine.back())) {
+            processedLine.pop_back();
+        }
+
+        if(processedLine == "SECAO DATA") flag = 1;
+        if(processedLine == "SECAO TEXT") flag = 0;
+
+        if(flag == 0){
+            code_text += processedLine + "\n";
+        }
+        if(flag == 1){
+            code_data += processedLine + "\n";
+        }
+    }
     code_section += code_text;
     code_section += code_data;
 
-    //cout << code_section << endl;
+    // Escreve a linha processada no arquivo de saída
+    outputFile << code_section << endl;
 
-    output_section << code_section << endl;
+    cout << "Arquivo pré-processado com sucesso!" << std::endl;
 
-    output_section.close();
-    input_section.close();
+    return output;
+}
+
+
+int main(int argc, char **argv) {
+
+    vector<string> instructions = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
+                                    "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP"};
+
+    set<string> reserved_words = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
+                                    "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP", "CONST", "SPACE", "MACRO", "ENDMACRO"};
+    set<string> def_instructions;
+
+    vector<string> directives = {"CONST", "SPACE"};
+
+    set<string> def_directives;
+    
+    map<string, string> opcode_values;
+
+    map<string, int> inst_size;
+
+    vector<string> cod_objeto; 
+
+    map<string, int> symb_table;
+
+    set<string> def_symb;
+    
+
+    //Iniciando os valores dos OPCODES e declarando o tamanho das instruções;
+    for(int i = 0; i < (int)instructions.size(); i++){
+        opcode_values[instructions[i]] = to_string(i + 1);
+        inst_size[instructions[i]] = 2;
+        def_instructions.insert(instructions[i]);
+    }
+    inst_size["COPY"] = 3;
+    inst_size["STOP"] = 1; 
+
+
+    //Inicializando os valores das diretivas
+    for(int i = 0; i < (int)directives.size(); i++) def_directives.insert(directives[i]);
+
+    //Aqui vamos pré processar o código asm através da linha de comando;
+    string fname = argv[1];
+    pre_processing(fname);
 
 
     //Dar inicio a primeira passagem para gerar a tabela de simbolos
     
-    ifstream input_f("pre_processed_file_section.txt");
+    ifstream input_f("pre_processed.txt");
     int PC = 0, line_counter = 1;
+    string line;
+    int c_section;
+    bool text_section = false;
 
     while(getline(input_f, line)){
         vector<string> tokens = getToken(line);
         int has_label = 0;
 
         //verifica a secao
-        if(line == "SECAO TEXT "){ 
+        if(line == "SECAO TEXT"){ 
             text_section = true;
             c_section = 1;
             line_counter++;
             continue;
-        }else if(line == "SECAO DATA "){
+        }else if(line == "SECAO DATA"){
             c_section = 2;
             line_counter++;
             continue;
@@ -235,7 +203,8 @@ int main(int argc, char **argv){
 
             //verifica se label tem ":"
             if(!reserved_words.count(token) && i == 0 && token.back() != ':' && token != "SECAO"){
-                cout << token << " label has missing ':'" << "\n";
+                cout << token << " label has missing ':' at line " << line_counter << "; \n";
+                
             }
 
             
@@ -253,18 +222,18 @@ int main(int argc, char **argv){
                 if(reserved_words.count(label)){
                     cout << "Semantic error: label with reserved name at line " << line_counter << "\n";
                 }
-                if(def_symbols.count(label)){
+                if(def_symb.count(label)){
                     cout << "Semantic  error: label redefined at line " << line_counter << "\n";
                 }else{
                     //verifica se esta escrito corretamente
-                    if(!verifyToken(label)) cout << "Lexical error: Token is not valid at " << line_counter << "\n"; 
+                    if(!isValidLabel(label)) cout << "Lexical error: Token is not valid at " << line_counter << "\n"; 
                     else{
-                        def_symbols.insert(label);
+                        def_symb.insert(label);
                         symb_table[label] = PC; 
                     }
                 has_label = 1;
                 }
-            }else if(def_opcodes.count(token)){
+            }else if(def_instructions.count(token)){
                 if(c_section != 1) cout << "Semantic error: instruction defined at wrong section at line " << line_counter << "\n";
 
                 PC += inst_size[token];
@@ -282,19 +251,20 @@ int main(int argc, char **argv){
     }
 
 
-    ifstream new_input_file("pre_processed_file_section.txt");
+    ifstream new_input_file("pre_processed.txt");
     ofstream out_file("myprogram.obj");
     PC = 0, line_counter = 1;
+
 
     //segunda passagem
     while(getline(new_input_file, line)){
         //verifica a secao
-        if(line == "SECAO TEXT "){
+        if(line == "SECAO TEXT"){
             text_section = true;
             c_section = 1;
             line_counter++;
             continue;
-        }else if(line == "SECAO DATA "){
+        }else if(line == "SECAO DATA"){
             c_section = 2;
             line_counter++;
             continue;
@@ -308,50 +278,32 @@ int main(int argc, char **argv){
         int virgula_pos = line.find_first_of(",");
         if (virgula_pos != string::npos) line = line.replace(virgula_pos, 1, " ");
 
-        //Removendo comentários
-        int pos = 0;
-        if(line.find(";"))  pos = line.find(";");
-        if(pos != string::npos) line = line.substr(0, pos);
-
-        //Removendo TAB
-        replace(line.begin(), line.end(), '\t', ' ');
-
-        //Removendo espaçoes duplicados
-        line = regex_replace(line, regex("^ +| +$|( ) +"), "$1");
-
-        //Transformando o código em uppercase
-        transform(line.begin(), line.end(), line.begin(), ::toupper);
         
-
-
-        //cout << line << "\n";
-       
 
         //extraindo token
         vector<string> tokens = getToken(line);
-        //cout << line << " " << tokens.size() << endl;
         
 
         for(int i = 0; i < tokens.size(); i++){
             
-            if(verifyToken(tokens[i])){
+            if(isValidLabel(tokens[i])){
 
                 //verifica se é operador
                 if(i == 0){
                     //verifica se eh uma instrucao
-                    if(def_opcodes.count(tokens[i])){
+                    if(def_instructions.count(tokens[i])){
                         //verifica numeros de operandos das instrucoes
                         if(inst_size[tokens[i]] == (int)tokens.size()){
                             PC += inst_size[tokens[i]];
                         if(tokens.size() == 3){ //if COPY, cria cod obj para COPY
-                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                            cod_objeto.push_back(opcode_values[tokens[i]]);
                             cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
                             cod_objeto.push_back(to_string(symb_table[tokens[i+2]]));
                         }else if(tokens.size() == 2 && i == 0){
-                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                            cod_objeto.push_back(opcode_values[tokens[i]]);
                             cod_objeto.push_back(to_string(symb_table[tokens[i+1]]));
                         }else if(tokens.size() == 1){
-                            cod_objeto.push_back(opcodes_values[tokens[i]]);
+                            cod_objeto.push_back(opcode_values[tokens[i]]);
                         }
                         }else{
                             cout << "Syntactic error: missing operators at line " << line_counter << "\n"; 
@@ -361,7 +313,6 @@ int main(int argc, char **argv){
                         if(tokens[i] == "SPACE"){
                                 PC++;
                                 cod_objeto.push_back("0");
-
                             }
                             if(tokens[i] == "CONST"){
                                 if(i+1 < tokens.size()){
@@ -372,19 +323,20 @@ int main(int argc, char **argv){
                                 }
                                 
                             }
-                    //nao eh diretiva e nem instrucao.. entao verifica se o valor do const, caso nao seja, palavra invalida
+                    //nao eh diretiva e nem instrucao.. entao verifica se é o valor do const, caso nao seja, palavra invalida
                     }else{
                         if(!isNumeric(tokens[i])){
-                            cout << "Lexical error: token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
+                            cout << "Semantic error: Symbol not defined at line " << line_counter << "\n";
                         }
                     }
                 }else if((i == 1 || i == 2) && tokens[i-1] != "CONST"){
-                    if(!def_symbols.count(tokens[i])) cout << "Semantic error: Symbol not defined at line " << line_counter << "\n";
+                    
+                    if(!(def_symb.count(tokens[i]) || def_instructions.count(tokens[i]))) cout << "Semantic error: Symbol not defined at line " << line_counter << "\n";
                 }
         
             }else{
                 //Codigo esta dando erro lexico quando ADD recebe operando como "X+2" (NECESSARIO ARRUMAR)
-                if(!isNumeric(tokens[i])) cout << "Lexical error: token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
+                if(!isNumeric(tokens[i])) cout << ": token " << tokens[i] <<  " is not valid at line " << line_counter << "\n";
             }
         }
         line_counter++;
@@ -397,12 +349,3 @@ int main(int argc, char **argv){
     new_input_file.close();
 
 }
-    
-
-
-
-
- // for(const auto&  it: symb_table){
-    //     cout << "{" << it.first << "," << it.second << "}" << "\n";
-    // }
-
