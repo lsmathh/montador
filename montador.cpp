@@ -73,7 +73,7 @@ bool isValidLabel(const string& label){
 }
 
 //FUNÇÃO PARA O PRÉ PROCESSAMENTO
-string pre_processing(string fname){
+    string pre_processing(string fname){
     ifstream inputFile(fname);
     ofstream outputFile("pre_processed.txt");
     string output = "pre_processed.txt";
@@ -81,11 +81,13 @@ string pre_processing(string fname){
     int flag = 0;
 
     if (!inputFile) {
-        cerr << "Error to create the input file." << endl;
+        cerr << "Error to read the input file '.asm'." << endl;
+        
     }
 
     if (!outputFile) {
-        cerr << "Error to create the output file." << endl;
+        cerr << "Error to create the output file (pre processed file)." << endl;
+        
     }
 
     regex pattern("\\s+"); // Expressão regular para encontrar espaços em branco repetidos
@@ -93,11 +95,12 @@ string pre_processing(string fname){
 
     while (getline(inputFile, line)) {
 
+        //DA PRA CRIAR O PROCESSAMENTO DA MACRO AQUI DENTRO DESTA FUNCAO WHILE... QUANDO O TOKEN FOR IGUAL A MACRO ESPERAR ATE CHEGAR ENDMACRO -> SALVA EM UMA STRING E DEPOIS ADICIONA NA SECAO TEXT ONDE TIVER O NOME DA MACRO
+
         //Remove comentários
         int pev = 0; 
         if(line.find(";")) pev = line.find(";");
         if(pev != string::npos) line = line.substr(0, pev);
-
         // Remove tabulações, quebras de linha e espaços desnecessários
         string processedLine = regex_replace(line, pattern, " ");
 
@@ -125,13 +128,15 @@ string pre_processing(string fname){
     // Escreve a linha processada no arquivo de saída
     outputFile << code_section << endl;
 
-    cout << "Arquivo pré-processado com sucesso!" << std::endl;
+    
 
     return output;
 }
 
 
 int main(int argc, char **argv) {
+    int fname_index;
+    fname_index = argc == 2 ? 1 : 2;
 
     vector<string> instructions = {"ADD", "SUB", "MUL", "DIV", "JMP", "JMPN", "JMPP", "JMPZ",
                                     "COPY", "LOAD", "STORE", "INPUT", "OUTPUT", "STOP"};
@@ -169,8 +174,9 @@ int main(int argc, char **argv) {
     for(int i = 0; i < (int)directives.size(); i++) def_directives.insert(directives[i]);
 
     //Aqui vamos pré processar o código asm através da linha de comando;
-    string fname = argv[1];
+    string fname = argv[fname_index];
     pre_processing(fname);
+    if(fname_index == 2) return 0;
 
 
     //Dar inicio a primeira passagem para gerar a tabela de simbolos
