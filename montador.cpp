@@ -181,6 +181,8 @@ int main(int argc, char **argv) {
     int c_section;
     bool text_section = false;
 
+    
+
     while(getline(input_f, line)){
         vector<string> tokens = getToken(line);
         int has_label = 0;

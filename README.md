@@ -1,13 +1,13 @@
 # Montador
-To run MONTADOR: 
+## To run MONTADOR: 
 
 ```
-    ./montador <file.asm>
+./montador <file.asm>
 ```
 
-To run SIMULADOR:
+## To run SIMULADOR:
 
 ```
-    ./simulador <file.obj>
+./simulador <file.obj>
 
 ```
