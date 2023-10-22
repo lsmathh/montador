@@ -78,7 +78,7 @@ bool isValidLabel(const string& label){
     ofstream outputFile("pre_processed.txt");
     string output = "pre_processed.txt";
     string code_data, code_text, code_section = "";
-    int flag = 0;
+    int flag = 2;
 
     if (!inputFile) {
         cerr << "Error to read the input file '.asm'." << endl;
@@ -92,15 +92,51 @@ bool isValidLabel(const string& label){
 
     regex pattern("\\s+"); // Expressão regular para encontrar espaços em branco repetidos
     string line;
+    bool macro = false;
+    int i = 0;
+    string aux;
+    map<string, string> macros;
+    set<string> def_macros;
+
 
     while (getline(inputFile, line)) {
+        vector<string> tokens = getToken(line);
+        
 
-        //DA PRA CRIAR O PROCESSAMENTO DA MACRO AQUI DENTRO DESTA FUNCAO WHILE... QUANDO O TOKEN FOR IGUAL A MACRO ESPERAR ATE CHEGAR ENDMACRO -> SALVA EM UMA STRING E DEPOIS ADICIONA NA SECAO TEXT ONDE TIVER O NOME DA MACRO
+        if(macro == true){
+            if(line != "ENDMACRO"){
+                if(def_macros.count(line)){
+                    line = macros[line];
+                    macros[aux] += line + "\n";
+                }else{
+                    macros[aux] += line + "\n";
+                }
+                
+            }else{
+                while (!macros[aux].empty() && std::isspace(macros[aux].back())) {
+                    macros[aux].pop_back();
+                }
+                macro = false; 
+            }
+        }
+        
+
+        for(int i = 0; i < tokens.size(); i++){
+            if(tokens[i] == "MACRO"){
+                macro = true;
+                if(i-1 >= 0){
+                    aux = tokens[i-1].substr(0, tokens[i-1].size() - 1);
+                    def_macros.insert(aux); 
+                }
+            }
+        }
+
 
         //Remove comentários
         int pev = 0; 
         if(line.find(";")) pev = line.find(";");
         if(pev != string::npos) line = line.substr(0, pev);
+
         // Remove tabulações, quebras de linha e espaços desnecessários
         string processedLine = regex_replace(line, pattern, " ");
 
@@ -112,24 +148,32 @@ bool isValidLabel(const string& label){
             processedLine.pop_back();
         }
 
+
         if(processedLine == "SECAO DATA") flag = 1;
         if(processedLine == "SECAO TEXT") flag = 0;
 
+        if(def_macros.count(processedLine)){
+
+                processedLine = macros[processedLine];
+            }
+
+
         if(flag == 0){
-            code_text += processedLine + "\n";
+            if(processedLine != "") code_text += processedLine + "\n";
+            
         }
         if(flag == 1){
-            code_data += processedLine + "\n";
+            if(processedLine != "") code_data += processedLine + "\n";
         }
     }
     code_section += code_text;
     code_section += code_data;
 
+
     // Escreve a linha processada no arquivo de saída
     outputFile << code_section << endl;
-
-    
-
+    inputFile.close();
+    outputFile.close();
     return output;
 }
 
@@ -177,7 +221,6 @@ int main(int argc, char **argv) {
     string fname = argv[fname_index];
     pre_processing(fname);
     if(fname_index == 2) return 0;
-
 
     //Dar inicio a primeira passagem para gerar a tabela de simbolos
     
