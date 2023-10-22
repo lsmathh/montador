@@ -1,6 +1,7 @@
 # MONTADOR
+Program compiled on Linux using the command: 
 ```
-Program compiled on Linux using the command: g++ -o montador montador.cpp
+g++ -o montador montador.cpp
 
 ```
 ## To run MONTADOR: 
@@ -10,9 +11,9 @@ Program compiled on Linux using the command: g++ -o montador montador.cpp
 
 ```
 # SIMULADOR
-
+Program compiled on Linux using the command:
 ```
-Program compiled on Linux using the command: g++ -o simulador simulador.cpp
+g++ -o simulador simulador.cpp
 
 ```
 
@@ -20,6 +21,6 @@ Program compiled on Linux using the command: g++ -o simulador simulador.cpp
 
 ```
 ./simulador <file.obj>
-* The simulator will only execute the next line after the user presses 'Enter'.
 
 ```
+* The simulator will only execute the next line after the user presses 'Enter'.
