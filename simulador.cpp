@@ -12,7 +12,7 @@ int main(int argc, char **argv){
     fname_index = argc == 2 ? 1 : 2;
     string fname = argv[fname_index];
 
-    int PC, n, memory, comand , last;
+    int PC, n, memory, comand;
     float ACC;
     vector <int> program;
 
@@ -21,7 +21,7 @@ int main(int argc, char **argv){
     while (arquivo >> n) { // COLOCA O ARQUIVO EM UM ARRAY
         program.push_back(n);   
     }
-    auto iterador = find(program.begin(), program.end(), 14); // Tentativa de encontrar o segmantation fault (não consegui ainda)
+   
     
     arquivo.close();
     ACC=0;
